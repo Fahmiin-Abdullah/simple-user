@@ -2,27 +2,21 @@ class UsersController < ApplicationController
   before_action :authorize_user, only: %i[show update]
   before_action :authenticate_user, only: %i[update]
 
-  def show
-    payload = @user.as_json(only: %i[first_name last_name email])
-    render json: payload, status: 200
-  end
+  def show; end
 
   def create
-    user = User.new(user_params)
-    if user.save
-      payload = user.as_json(only: %i[first_name last_name email])
-      payload[:token] = EncryptionService.new(user).encrypt
-
-      render json: payload, status: 200
+    @user = User.new(user_params)
+    if @user.save
+      @user.token = EncryptionService.new(@user).encrypt
+      render :create, status: 200, location: @user
     else
-      render json: { errors: user.errors.full_messages }, status: 422
+      render json: { errors: @user.errors.full_messages }, status: 422
     end
   end
 
   def update
     if @user.update(user_params)
-      payload = @user.as_json(only: %i[first_name last_name email])
-      render json: payload, status: 200
+      render :show, status: 200, location: @user
     else
       render json: { errors: @user.errors.full_messages }, status: 422
     end

@@ -9,10 +9,11 @@ RSpec.describe UsersController, type: :controller do
     context 'with valid params and api key' do
       it 'returns user details' do
         request.headers['X-Api-Key'] = token
-        get :show, params: { id: user.id }
+        get :show, params: { id: user.id }, format: :json
         result = JSON.parse(response.body)
 
         expect(response).to have_http_status(200)
+        expect(result['id']).to eq(user.id)
         expect(result['first_name']).to eq('John')
         expect(result['last_name']).to eq('Doe')
         expect(result['email']).to eq('john.doe@email.com')
@@ -22,7 +23,7 @@ RSpec.describe UsersController, type: :controller do
     context 'with wrong api key' do
       it 'return error' do
         request.headers['X-Api-Key'] = '67890'
-        get :show, params: { id: user.id }
+        get :show, params: { id: user.id }, format: :json
         result = JSON.parse(response.body)
 
         expect(response).to have_http_status(422)
@@ -43,10 +44,11 @@ RSpec.describe UsersController, type: :controller do
 
     context 'with valid params' do
       it 'creates new user' do
-        post :create, params: valid_params
+        post :create, params: valid_params, format: :json
         result = JSON.parse(response.body)
 
         expect(response).to have_http_status(200)
+        expect(result['id']).to eq(User.last.id)
         expect(result['first_name']).to eq('Brad')
         expect(result['last_name']).to eq('Pitt')
         expect(result['email']).to eq('brad.pitt@email.com')
@@ -58,7 +60,7 @@ RSpec.describe UsersController, type: :controller do
       context 'when empty first name' do
         it 'returns error' do
           valid_params.delete(:first_name)
-          post :create, params: valid_params
+          post :create, params: valid_params, format: :json
           result = JSON.parse(response.body)
 
           expect(response).to have_http_status(422)
@@ -69,7 +71,7 @@ RSpec.describe UsersController, type: :controller do
       context 'when empty last name' do
         it 'returns error' do
           valid_params.delete(:last_name)
-          post :create, params: valid_params
+          post :create, params: valid_params, format: :json
           result = JSON.parse(response.body)
 
           expect(response).to have_http_status(422)
@@ -80,7 +82,7 @@ RSpec.describe UsersController, type: :controller do
       context 'when empty emil' do
         it 'returns error' do
           valid_params.delete(:email)
-          post :create, params: valid_params
+          post :create, params: valid_params, format: :json
           result = JSON.parse(response.body)
 
           expect(response).to have_http_status(422)
@@ -91,7 +93,7 @@ RSpec.describe UsersController, type: :controller do
       context 'when empty password' do
         it 'returns error' do
           valid_params.delete(:password)
-          post :create, params: valid_params
+          post :create, params: valid_params, format: :json
           result = JSON.parse(response.body)
 
           expect(response).to have_http_status(422)
@@ -115,10 +117,11 @@ RSpec.describe UsersController, type: :controller do
     context 'with valid params and api key' do
       it 'updates user details' do
         request.headers['X-Api-Key'] = token
-        put :update, params: valid_params
+        put :update, params: valid_params, format: :json
         result = JSON.parse(response.body)
 
         expect(response).to have_http_status(200)
+        expect(result['id']).to eq(user.id)
         expect(result['first_name']).to eq('Angelina')
         expect(result['last_name']).to eq('Jolie')
         expect(result['email']).to eq('angeline.jolie@email.com')
@@ -128,7 +131,7 @@ RSpec.describe UsersController, type: :controller do
     context 'when wrong api key' do
       it 'return error' do
         request.headers['X-Api-Key'] = '67890'
-        put :update, params: valid_params
+        put :update, params: valid_params, format: :json
         result = JSON.parse(response.body)
 
         expect(response).to have_http_status(422)
@@ -140,7 +143,7 @@ RSpec.describe UsersController, type: :controller do
       it 'return error' do
         valid_params[:password] = 'password1'
         request.headers['X-Api-Key'] = token
-        put :update, params: valid_params
+        put :update, params: valid_params, format: :json
         result = JSON.parse(response.body)
 
         expect(response).to have_http_status(422)
