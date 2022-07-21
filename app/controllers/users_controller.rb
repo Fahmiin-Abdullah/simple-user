@@ -3,13 +3,17 @@ class UsersController < ApplicationController
   before_action :authenticate_user, only: %i[update]
 
   def show
-    render json: @user.as_json(except: %i[id password_digest created_at updated_at]), status: 200
+    payload = @user.as_json(only: %i[first_name last_name email])
+    render json: payload, status: 200
   end
 
   def create
     user = User.new(user_params)
     if user.save
-      render json: user.as_json(except: %i[id password_digest created_at updated_at]), status: 200
+      payload = user.as_json(only: %i[first_name last_name email])
+      payload[:token] = EncryptionService.new(user).encrypt
+
+      render json: payload, status: 200
     else
       render json: { errors: user.errors.full_messages }, status: 422
     end
@@ -17,7 +21,8 @@ class UsersController < ApplicationController
 
   def update
     if @user.update(user_params)
-      render json: @user.as_json(except: %i[id password_digest created_at updated_at]), status: 200
+      payload = @user.as_json(only: %i[first_name last_name email])
+      render json: payload, status: 200
     else
       render json: { errors: @user.errors.full_messages }, status: 422
     end
@@ -27,7 +32,8 @@ class UsersController < ApplicationController
 
   def authorize_user
     @user = User.find(params[:id])
-    render json: { errors: ['Wrong API key'] }, status: 422 unless @user.api_key == request.headers['X-Api-Key']
+    token = request.headers['X-Api-Key']
+    render json: { errors: ['Wrong API key'] }, status: 422 unless EncryptionService.new(@user).valid_token?(token)
   end
 
   def authenticate_user

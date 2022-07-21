@@ -1,12 +1,14 @@
 require 'rails_helper'
+require 'jwt'
 
 RSpec.describe UsersController, type: :controller do
-  let!(:user) { User.create(first_name: 'John', last_name: 'Doe', email: 'john.doe@email.com', password: 'password', api_key: '12345') }
+  let!(:user) { User.create(first_name: 'John', last_name: 'Doe', email: 'john.doe@email.com', password: 'password') }
+  let!(:token) { EncryptionService.new(user).encrypt }
 
   describe '#show' do
     context 'with valid params and api key' do
       it 'returns user details' do
-        request.headers['X-Api-Key'] = '12345'
+        request.headers['X-Api-Key'] = token
         get :show, params: { id: user.id }
         result = JSON.parse(response.body)
 
@@ -14,7 +16,6 @@ RSpec.describe UsersController, type: :controller do
         expect(result['first_name']).to eq('John')
         expect(result['last_name']).to eq('Doe')
         expect(result['email']).to eq('john.doe@email.com')
-        expect(result['api_key']).to eq('12345')
       end
     end
 
@@ -49,7 +50,7 @@ RSpec.describe UsersController, type: :controller do
         expect(result['first_name']).to eq('Brad')
         expect(result['last_name']).to eq('Pitt')
         expect(result['email']).to eq('brad.pitt@email.com')
-        expect(result).to have_key('api_key')
+        expect(result).to have_key('token')
       end
     end
 
@@ -113,7 +114,7 @@ RSpec.describe UsersController, type: :controller do
 
     context 'with valid params and api key' do
       it 'updates user details' do
-        request.headers['X-Api-Key'] = '12345'
+        request.headers['X-Api-Key'] = token
         put :update, params: valid_params
         result = JSON.parse(response.body)
 
@@ -138,7 +139,7 @@ RSpec.describe UsersController, type: :controller do
     context 'when wrong password' do
       it 'return error' do
         valid_params[:password] = 'password1'
-        request.headers['X-Api-Key'] = '12345'
+        request.headers['X-Api-Key'] = token
         put :update, params: valid_params
         result = JSON.parse(response.body)
 
